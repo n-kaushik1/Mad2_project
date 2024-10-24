@@ -2,5 +2,11 @@ class Config():
     DEBUG = False
     SQL_ALCHEMY_TRACK_MODIFICATIONS = False
 
-class LocalDevelopmentConfig():
-    SQLALCHEMY_DATABASE_URI = "sqlite:///database.sqlite3"    
+class LocalDevelopmentConfig(Config):
+    SQLALCHEMY_DATABASE_URI = "sqlite:///database.sqlite3"
+    DEBUG = True
+    SECURITY_PASSWORD_HASH = 'bcrypt'
+    SECURITY_PASSWORD_SALT = 'thisshouldbesecrete'
+    SECRET_KEY = 'shouldbehidden'
+    SECURITY_TOKEN_AUTHENTICATION_HEADER = 'Authentication-Token'
+    WTF_CSRF_ENABLED = False    
