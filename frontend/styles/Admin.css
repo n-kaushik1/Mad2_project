@@ -1,0 +1,101 @@
+/* dashboard.css */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.admin {
+    display: flex;
+    justify-content: center; /* Center the dashboard horizontally */
+    align-items: center;
+    padding: 50px 20px;
+    min-height: 100vh; /* Full height for vertical centering */
+    box-sizing: border-box;
+    background-image: url('https://images.pexels.com/photos/346529/pexels-photo-346529.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; 
+    background-repeat: no-repeat;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    width: 90%; /* Expands more naturally on larger screens */
+    max-width: 1200px; /* Limits the width on very large screens */
+    background-color: #d1e5f7;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Softer shadow */
+    box-sizing: border-box;
+}
+
+.section {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.section h2 {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.section > * {
+    margin-top: 12px;
+}
+
+.modal-content {
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.modal-header {
+    background-color: #f7f9fc;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+    font-size: 1.5em;
+    color: #333;
+}
+
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.details-table th,
+.details-table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.details-table th {
+    background-color: #f0f4f8;
+    font-weight: bold;
+    color: #555;
+    width: 35%;
+}
+
+.details-table td {
+    background-color: #ffffff;
+    color: #333;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+    padding-bottom: 10px;
+}
+
+/* Admin search */
+

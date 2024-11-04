@@ -28,7 +28,7 @@ with app.app_context():
     if not User.query.filter_by(email="admin@example.com").first():
         admin_user = user_datastore.create_user(
             email="admin@mail.com",
-            password=hash_password("adminpassword")  # Make sure to hash the password properly in real applications
+            password=hash_password("adminpass")  # Make sure to hash the password properly in real applications
         )
         # Assign the admin role to the admin user
         user_datastore.add_role_to_user(admin_user, "Admin")

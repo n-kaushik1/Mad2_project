@@ -1,5 +1,5 @@
-from flask import current_app as app, request, jsonify , render_template
-from flask_security import auth_required, verify_password ,hash_password
+from flask import current_app as app, request, jsonify, render_template
+from flask_security import auth_required, verify_password, hash_password
 from backend.models import *
 
 datastore = app.security.datastore
@@ -13,7 +13,6 @@ def home():
 @auth_required('token')
 def protected():
     return '<h1>Only accessible by authenticated users</h1>'
-
 
 # Login route
 @app.route('/login', methods=['POST'])
@@ -31,33 +30,41 @@ def login():
 
     if not user:
         return jsonify({"message": "Invalid email"}), 400
+    
+    # Check if the account is active
+    if not user.active:
+        return jsonify({"message": "This account is not active or rejected by admin"}), 403
 
     # Verify the user's password
     if verify_password(password, user.password):
-        #using tokens or session authentication
         return jsonify({
-            'token': user.get_auth_token(),  #  user.get_auth_token() is implemented
+            'token': user.get_auth_token(),
             'email': user.email,
-            'role': [role.name for role in user.roles],  # Correctly fetch user roles
+            'role': [role.name for role in user.roles],
             'id': user.id
         }), 200
 
     return jsonify({"message": "Incorrect password"}), 400
-
 
 # Registration route
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
 
+    # Common fields for all users
     email = data.get('email')
     password = data.get('password')
     role_name = data.get('role')
-    name = data.get('name')  # New field
-    service_type = data.get('serviceType')  # New field for Service Professionals
-    description = data.get('description')  # New field for Service Professionals
-    experience = data.get('experience')  # New field for Service Professionals
+    name = data.get('name')
+    address = data.get('address')
+    pin_code = data.get('pinCode')
 
+    # Fields specific to Service Professionals
+    service_id = data.get('serviceType')
+    description = data.get('description')
+    experience = data.get('experience')
+
+    # Validate input fields
     if not email or not password or role_name not in ['Service Professional', 'Customer'] or not name:
         return jsonify({"message": "Invalid inputs"}), 400
 
@@ -66,14 +73,26 @@ def register():
     if user:
         return jsonify({"message": "User already exists"}), 400
 
-    # Create a new user with additional fields
+    # Validate service ID if user is a Service Professional
+    if role_name == 'Service Professional':
+        if not service_id:
+            return jsonify({"message": "Service ID is required for service professionals"}), 400
+        service = Service.query.get(service_id)
+        if not service:
+            return jsonify({"message": "Invalid service ID"}), 400
+
+    # Create a new user
     new_user = datastore.create_user(
         email=email,
-        password=hash_password(password),  # Hash the password before saving
+        password=hash_password(password),
         name=name,
-        service_type=service_type,
-        description=description,
-        experience=experience
+        address=address,
+        pin_code=pin_code,
+        service_id=service_id if role_name == 'Service Professional' else None,
+        description=description if role_name == 'Service Professional' else None,
+        experience=experience if role_name == 'Service Professional' else None,
+        permission='pending' if role_name == 'Service Professional' else None,
+        active= False if role_name == 'Service Professional' else True
     )
 
     # Assign the role to the new user
@@ -83,7 +102,6 @@ def register():
     else:
         return jsonify({"message": "Role not found"}), 400
 
-    # Commit the changes to the database
     db.session.commit()
 
     return jsonify({

@@ -1,6 +1,6 @@
 export default {
-    template: `
-    <div class="container mt-5">
+  template: `
+  <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
         <div class="card shadow-lg">
@@ -33,85 +33,135 @@ export default {
               </select>
             </div>
 
+            <!-- Address Field -->
+            <div class="form-group mb-3">
+              <label for="address">Address</label>
+              <input type="text" class="form-control" id="address" placeholder="Enter your address" v-model="address" />
+            </div>
+
+            <!-- Pin Code Field -->
+            <div class="form-group mb-3">
+              <label for="pinCode">Pin Code</label>
+              <input type="text" class="form-control" id="pinCode" placeholder="Enter your pin code" v-model="pinCode" />
+            </div>
+
             <!-- Fields specific to 'Service Professional' -->
             <div v-if="role === 'Service Professional'">
               <div class="form-group mb-3">
                 <label for="serviceType">Service Type</label>
-                <input type="text" class="form-control" id="serviceType" placeholder="Enter the type of service" v-model="serviceType" />
+                <select class="form-control" id="serviceType" v-model="serviceType">
+                  <option disabled value="">Select a service</option>
+                  <option v-for="service in services" :key="service.id" :value="service.id">{{ service.name }}</option>
+                </select>
               </div>
 
               <div class="form-group mb-3">
                 <label for="description">Description</label>
-                <textarea class="form-control" id="description" placeholder="Provide a brief description" v-model="description"></textarea>
+                <textarea class="form-control" id="description" placeholder="Enter a description" v-model="description"></textarea>
               </div>
 
               <div class="form-group mb-3">
                 <label for="experience">Experience (in years)</label>
-                <input type="number" class="form-control" id="experience" placeholder="Enter your experience in years" v-model="experience" />
+                <input type="number" class="form-control" id="experience" placeholder="Enter your experience" v-model="experience" />
               </div>
             </div>
 
-            <button class="btn btn-info btn-block" @click="submitRegister">Register</button>
+            <button class="btn btn-primary" @click="submitRegister" :disabled="!isFormComplete">Register</button>
           </div>
         </div>
       </div>
     </div>
   </div>
-    `,
-    data() {
-        return {
-            name: '',          // Name field for all users
-            email: '',         // Email field for all users
-            password: '',      // Password field for all users
-            role: '',          // Role selection
-            serviceType: '',   // For service professional
-            description: '',   // For service professional
-            experience: '',    // For service professional
-        };
+  `,
+  data() {
+    return {
+      name: '',
+      email: '',
+      password: '',
+      role: '',
+      address: '',
+      pinCode: '',
+      serviceType: '',
+      description: '',
+      experience: '',
+      services: [], // List of available services
+    };
+  },
+  computed: {
+    isFormComplete() {
+      return (
+        this.name &&
+        this.email &&
+        this.password &&
+        this.role &&
+        this.address &&
+        this.pinCode &&
+        (this.role !== 'Service Professional' || (this.serviceType && this.description && this.experience))
+      );
     },
-    methods: {
-        async submitRegister() {
-            if (!this.role) {
-                alert("Please select a role");
-                return;
-            }
+  },
+  async created() {
+    try {
+      const response = await fetch('/api/services');
+      if (response.ok) {
+        const data = await response.json();
+        this.services = data; // data is a list of services
+      } else {
+        console.error('Failed to fetch services:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
+  },
+  methods: {
+    async submitRegister() {
+      const registrationData = {
+        name: this.name,
+        email: this.email,
+        password: this.password,
+        role: this.role,
+        address: this.address,
+        pinCode: this.pinCode,
+      };
 
-            // Data to send in the request
-            let registrationData = {
-                name: this.name,
-                email: this.email,
-                password: this.password,
-                role: this.role,
-            };
+      if (this.role === 'Service Professional') {
+        registrationData.serviceType = this.serviceType;
+        registrationData.description = this.description;
+        registrationData.experience = this.experience;
+      }
 
-            // Add service professional-specific data if the role is 'Service Professional'
-            if (this.role === 'Service Professional') {
-                registrationData.serviceType = this.serviceType;
-                registrationData.description = this.description;
-                registrationData.experience = this.experience;
-            }
+      try {
+        const res = await fetch(`${location.origin}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(registrationData),
+        });
 
-            console.log("Data being sent:", registrationData);  // Debug log the data being sent
+        const responseData = await res.json();
 
-            try {
-                const res = await fetch(location.origin + '/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(registrationData),  // Send registration data
-                });
-
-                if (res.ok) {
-                    console.log('Registration successful');
-                    const data = await res.json();
-                    console.log(data);
-                } else {
-                    console.error('Registration failed:', res.status);
-                }
-            } catch (error) {
-                console.error('Error during registration:', error);
-            }
-        },
+        if (res.ok) {
+          alert(responseData.message);
+          this.clearFormFields();
+        } else {
+          alert(responseData.message || 'Registration failed');
+        }
+      } catch (error) {
+        console.error('Error during registration:', error);
+      }
     },
+    clearFormFields() {
+      // Reset all form fields
+      this.name = '';
+      this.email = '';
+      this.password = '';
+      this.role = '';
+      this.address = '';
+      this.pinCode = '';
+      this.serviceType = '';
+      this.description = '';
+      this.experience = '';
+    },
+  },
 };
