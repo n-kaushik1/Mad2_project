@@ -4,7 +4,7 @@ export default {
     template: `
     <div class="table-wrapper">
     <div class="container my-5">
-        <table class="table table-striped table-hover">
+        <table v-if="pendingProfessionals.length" class="table table-striped table-hover">
             <thead class="thead-light">
                 <tr>
                     <th scope="col">ID</th>
@@ -39,6 +39,7 @@ export default {
                 </tr>
             </tbody>
         </table>
+        <p v-else class="text-muted">No new professionals request.</p>
         </div>
 
         <!-- Professional Details Modal -->
@@ -110,6 +111,11 @@ export default {
             selectedProfessional: null,
         };
     },
+    computed: {
+        pendingProfessionals() {
+            return this.professionals.filter(prof => prof.status === 'pending');
+        }
+    },
 
     methods: {
         formatDate(dateString) {
@@ -119,7 +125,7 @@ export default {
         
         async fetchProfessionals() {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 if (!token) return;
 
                 const res = await fetch(`${location.origin}/api/admin/professionals`, {
@@ -145,7 +151,7 @@ export default {
 
         async changeProfessionalPermission(professionalId, action) {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 if (!token) return;
 
                 const res = await fetch(`${location.origin}/api/admin/professionals/${professionalId}`, {

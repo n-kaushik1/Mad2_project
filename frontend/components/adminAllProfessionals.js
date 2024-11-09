@@ -20,7 +20,7 @@ export default {
   methods: {
     async fetchProfessionals() {
       try {
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
+        const token = this.$store.state.auth_token;
         const response = await fetch('/api/admin/all_professionals', {
           headers: {
             'Authentication-Token': token
@@ -81,7 +81,7 @@ export default {
     <div class="container my-5">
       <h2 class="mb-4"> Service Professionals</h2>
       <div class="table-wrapper">
-        <table class="table table-hover table-bordered">
+        <table v-if="filteredProfessionals.length > 0" class="table table-hover table-bordered">
           <thead class="table-dark">
             <tr>
               <th>ID</th>
@@ -114,6 +114,7 @@ export default {
             </tr>
           </tbody>
         </table>
+        <p v-else class="text-muted text-center">No professionals available.</p>
       </div>
   
       <!-- Professional Details Modal -->

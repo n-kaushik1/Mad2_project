@@ -4,6 +4,7 @@ export default {
     name: 'adminServiceRequests',
     template: `
     <div class="container my-5">      
+      
         <!-- Scrollable table wrapper -->
         <div class="table-wrapper">
             <table class="table table-striped table-hover">
@@ -29,6 +30,9 @@ export default {
                 </tbody>
             </table>
         </div>
+        <br>
+           <!-- Button to download closed service requests report -->
+           <button class="btn btn-success mb-3" @click="downloadClosedServiceRequestsReport">Download Closed Requests Report</button>             
 
         <!-- Modal for displaying request details -->
         <div v-if="selectedRequest" class="modal fade show" tabindex="-1" style="display: block;">
@@ -72,6 +76,10 @@ export default {
                                 <th>Customer Phone</th>
                                 <td>{{ selectedRequest.customer_phone }}</td>
                             </tr>
+                            <tr v-if="selectedRequest.service_status === 'closed'">
+                                <th>Date of completion</th>
+                                <td>{{ formatDate(selectedRequest.date_of_completion) || 'N/A' }}</td>
+                            </tr>
                         </table>
                     </div>
                     <div class="modal-footer">
@@ -98,7 +106,7 @@ export default {
     methods: {
         async fetchServiceRequests() {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 const response = await fetch('/api/admin/requests', {
                     headers: {
                         'Authentication-Token': `${token}`
@@ -119,9 +127,49 @@ export default {
                 console.error("Error fetching service requests:", error);
             }
         },
+        async downloadClosedServiceRequestsReport() {
+            try {
+                // Start the CSV generation task
+                const response = await fetch('/create-csv', {
+                    headers: {
+                        'Authentication-Token': this.$store.state.auth_token
+                    }
+                });
+                if (!response.ok) throw new Error("Failed to initiate report creation");
+
+                const { task_id } = await response.json();
+                
+                // Polling to check if the task is ready
+                const checkTaskStatus = async () => {
+                    const resultResponse = await fetch(`/get-csv/${task_id}`, {
+                        headers: {
+                            'Authentication-Token': this.$store.state.auth_token
+                        }
+                    });
+                    if (resultResponse.ok) {
+                        // If ready, download the file
+                        const blob = await resultResponse.blob();
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'ClosedServiceRequests.csv';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } else {
+                        // Retry after a delay if the task isn't ready
+                        setTimeout(checkTaskStatus, 2000);
+                    }
+                };
+
+                checkTaskStatus();
+            } catch (error) {
+                console.error("Error downloading closed service requests report:", error);
+            }
+        },
         async fetchProfessionalName(professional_id) {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 const response = await fetch(`/api/admin/professionals/${professional_id}`, {
                     headers: {
                         'Authentication-Token': `${token}`
@@ -139,7 +187,7 @@ export default {
         },
         async fetchServiceName(service_id) {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 const response = await fetch(`/api/services/${service_id}`, {
                     headers: {
                         'Authentication-Token': `${token}`
@@ -163,6 +211,7 @@ export default {
                 case 'requested': return 'Requested';
                 case 'accepted': return 'Accepted';
                 case 'closed': return 'Closed';
+                case 'rejected': return 'Rejected';
                 default: return 'N/A';
             }
         },

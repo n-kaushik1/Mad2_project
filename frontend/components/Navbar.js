@@ -17,7 +17,7 @@ export default {
       const role = this.$store.state.role;
       if (role === 'Admin') return '/adminsearch';
       if (role === 'Customer') return '/';
-      if (role === 'Service Professional') return '/';
+      if (role === 'Service Professional') return '/professionalsearch';
       return '/'; // Default route
     },
     userRole() {
@@ -40,17 +40,17 @@ export default {
         </router-link>
 
         <!-- Toggler for mobile view -->
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
+            <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
 
         <!-- Navbar items -->
         <div class="collapse navbar-collapse" id="navbarNav">

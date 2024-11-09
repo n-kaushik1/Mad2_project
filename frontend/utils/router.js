@@ -1,3 +1,4 @@
+import store from './store.js';
 
 const Home = {
     template: `
@@ -14,7 +15,7 @@ const Home = {
       </div>
     `,
     mounted() {
-      // Applying inline styling via JavaScript since CSS-in-JS isn't supported directly here
+      // inline styling via JavaScript 
       const style = document.createElement('style');
       style.innerHTML = `
          .home-page {
@@ -65,19 +66,49 @@ import AdminDashboard from "../pages/Admindashboard.js";
 import CustomerDashboard from "../pages/Customerdashboard.js";
 import ProfessionalDashboard from "../pages/Professionaldashboard.js";
 import AdminSearch from "../pages/AdminSearch.js";
+import ProfessionalSearch from '../pages/ProfessionalSearch.js';
 
 const routes = [
     { path: '/', component: Home },
     { path: '/login', component: LoginPage },
     { path: '/register', component: RegisterPage },
-    { path: '/admin', component: AdminDashboard }, // Admin Dashboard
-    { path: '/customer', component: CustomerDashboard }, // Customer Dashboard
-    { path: '/professional', component: ProfessionalDashboard }, // Professional Dashboard
-    { path: '/adminsearch', component: AdminSearch }, // Professional Dashboard
+    { path: '/admin', component: AdminDashboard, meta: { requiresLogin: true, role: 'Admin' } },
+    { path: '/customer', component: CustomerDashboard, meta: { requiresLogin: true, role: 'Customer' } },
+    { path: '/professional', component: ProfessionalDashboard, meta: { requiresLogin: true, role: 'Service Professional' } },
+    { path: '/adminsearch', component: AdminSearch, meta: { requiresLogin: true, role: 'Admin' } },
+    { path: '/professionalsearch', component: ProfessionalSearch, meta: { requiresLogin: true, role: 'Service Professional' } },
 ];
 
 const router = new VueRouter({
     routes
+});
+
+// Navigation Guards
+router.beforeEach((to, from, next) => {
+    if (to.matched.some((record) => record.meta.requiresLogin)) {
+        // Check if user is logged in
+        if (!store.state.loggedIn) {
+            next('/login'); // Redirect to login if not logged in
+        } else if (to.meta.role && store.state.role !== to.meta.role) {
+            // Redirect based on role if user lacks proper role for the route
+            if (store.state.role === 'Admin') {
+                alert('role not authorized')
+                next('/admin');
+            } else if (store.state.role === 'Customer') {
+                alert('role not authorized')
+                next('/customer');
+            } else if (store.state.role === 'Service Professional') {
+                alert('role not authorized')
+                next('/professional');
+            } else {
+                next('/'); // Redirect to home if role is not recognized
+            }
+        } else {
+            next(); // Allow access if logged in and role matches
+        }
+    } else {
+        next(); // Allow access if no login is required
+    }
 });
 
 export default router;

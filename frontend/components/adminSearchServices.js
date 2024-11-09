@@ -52,7 +52,7 @@ export default {
         <h2 class="mb-4"> Services</h2>
         <!-- Scrollable table wrapper -->
         <div class="table-wrapper">
-            <table class="table table-hover table-bordered">
+            <table v-if="filteredServices.length > 0" class="table table-hover table-bordered">
                 <thead class="table-dark">
                     <tr>
                         <th scope="col">ID</th>
@@ -89,6 +89,7 @@ export default {
                     </tr>
                 </tbody>
             </table>
+            <p v-else class="text-muted text-center">No Services available.</p>
         </div>
         <div class="text-end mb-3">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">Add New Service</button>
@@ -236,13 +237,13 @@ export default {
     methods: {
         async fetchServices() {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 if (!token) {
                     console.error("Token not found. Please log in.");
                     return;
                 }
                 const res = await fetch(`${location.origin}/api/services`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authentication-Token': `${token}` }
                 });
                 if (res.ok) {
                     this.services = await res.json();
@@ -256,7 +257,7 @@ export default {
 
         async addService() {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 if (!token) {
                     console.error("Token not found. Please log in.");
                     this.$router.push('/login');
@@ -294,7 +295,7 @@ export default {
 
         async updateService() {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 if (!token) {
                     console.error("Token not found for updating service. Please log in.");
                     this.$router.push('/login');
@@ -332,7 +333,7 @@ export default {
 
         async deleteService() {
             try {
-                const token = JSON.parse(localStorage.getItem('user'))?.token;
+                const token = this.$store.state.auth_token;
                 if (!token) {
                     console.error("Token not found for deleting service. Please log in.");
                     this.$router.push('/login');

@@ -1,7 +1,10 @@
 from flask_restful import Api, Resource, reqparse, fields, marshal_with
-from flask_security import auth_required, current_user
+from flask_security import auth_required, current_user,hash_password
 from backend.models import db, User, Service, ServiceRequest ,Role
+from flask import request,current_app as app
+from datetime import datetime, timezone
 
+cache = app.cache
 # Define the API and its prefix
 api = Api(prefix='/api')
 
@@ -9,6 +12,7 @@ api = Api(prefix='/api')
 user_fields = {
     'id': fields.Integer,
     'email': fields.String,
+    'password': fields.String,
     'name': fields.String,
     'service_type': fields.String(attribute='service.name'),
     'experience': fields.Integer,
@@ -38,17 +42,23 @@ service_request_fields = {
     'service_status': fields.String,
     'remarks': fields.String,
     'customer_phone': fields.String,
-    'service_name': fields.String(attribute='parent_service.name') 
+    'service_name': fields.String(attribute='parent_service.name'),
+    'customer_name': fields.String(attribute='customer.name'),
+    'address':fields.String(attribute='customer.address'),
+    'pin_code':fields.String(attribute='customer.pin_code'),
 }
 
 # Parsers to handle incoming request data
 user_parser = reqparse.RequestParser()
 user_parser.add_argument('email', type=str, required=False)
 user_parser.add_argument('password', type=str, required=False)
+user_parser.add_argument('password', type=str, required=False)
 user_parser.add_argument('name', type=str, required=False)
 user_parser.add_argument('service_type', type=str, required=False)
 user_parser.add_argument('experience', type=int, required=False)
 user_parser.add_argument('description', type=str, required=False)
+user_parser.add_argument('address', type=str, required=False)
+user_parser.add_argument('pin_code', type=str, required=False)
 
 service_parser = reqparse.RequestParser()
 service_parser.add_argument('name', type=str, required=True)
@@ -61,6 +71,8 @@ service_request_parser.add_argument('service_id', type=int, required=True)
 service_request_parser.add_argument('customer_id', type=int, required=False)
 service_request_parser.add_argument('remarks', type=str, required=False)
 service_request_parser.add_argument('customer_phone', type=str, required=False)
+service_request_parser.add_argument('professional_id', type=int, required=False) 
+service_request_parser.add_argument('date_of_completion', type=str, required=False, help="Date of completion in DD-MM-YYYY format")
 
 
 # Admin-specific actions for managing services
@@ -145,6 +157,7 @@ class AdminResource(Resource):
 class ServiceRequestManagementResource(Resource):
     @marshal_with(service_request_fields)
     @auth_required('token')
+    @cache.cached(timeout=10)
     def get(self, request_id=None):
         # Only allow Admin users to view service requests
         if 'Admin' not in [role.name for role in current_user.roles]:
@@ -281,6 +294,16 @@ class CustomerManagementResource(Resource):
 class UserResource(Resource):
     @marshal_with(user_fields)
     @auth_required('token')
+    def get(self):
+        # Get the profile of the authenticated user
+        user = User.query.get(current_user.id)
+        if not user:
+            return {'message': 'User not found'}, 404
+        return user, 200
+
+
+    @marshal_with(user_fields)
+    @auth_required('token')
     def put(self):
         # Any authenticated user can update their own profile
         user = User.query.get(current_user.id)
@@ -291,15 +314,17 @@ class UserResource(Resource):
         if args['email']:
             user.email = args['email']
         if args['password']:
-            user.password = args['password']
+            user.password = hash_password(args['password'])
         if args['name']:
             user.name = args['name']
-        if args['service_type']:
-            user.service_type = args['service_type']
         if args['experience']:
             user.experience = args['experience']
         if args['description']:
             user.description = args['description']
+        if args['address']:
+            user.address = args['address']
+        if args['pin_code']:
+            user.pin_code = args['pin_code']
 
         db.session.commit()
         return user, 200
@@ -309,12 +334,15 @@ class UserResource(Resource):
 class ProfessionalResource(Resource):
     @marshal_with(service_request_fields)
     @auth_required('token')
-    def get(self, professional_id):
+    def get(self):
         if 'Service Professional' not in [role.name for role in current_user.roles]:
             return {'message': 'Access denied'}, 403
 
-        # Filter by professional's service type
-        service_requests = ServiceRequest.query.filter_by(professional_id=professional_id, service_id=current_user.service_id).all()
+        # Retrieve requests that are either requested or accepted and assigned to the current professional
+        service_requests = ServiceRequest.query.filter(
+            ServiceRequest.service_id == current_user.service_id,
+            ServiceRequest.professional_id == current_user.id
+            ).all()
 
         if not service_requests:
             return {'message': 'No service requests found'}, 404
@@ -331,13 +359,24 @@ class ProfessionalResource(Resource):
         if not service_request:
             return {'message': 'Service request not found'}, 404
 
-        if service_request.professional_id != current_user.id:
-            return {'message': 'Unauthorized action'}, 403
+        action = request.args.get('action')
+        if action not in ['accept', 'reject','close']:
+            return {'message': 'Invalid action. Use "accept" or "reject".'}, 400
 
-        # Accept or reject logic (example: using query param to indicate accept/reject)
-        service_request.service_status = 'accepted'  # Change based on request
+        if action == 'accept':
+            # Set service status to 'accepted' and assign the current user as the professional
+            service_request.service_status = 'accepted'
+            service_request.professional_id = current_user.id
+        elif action == 'reject':
+            # Set service status to 'rejected'
+            service_request.service_status = 'rejected'
+        elif action == 'close':
+            # Set service status to 'closed'
+            service_request.service_status = 'closed'
+            service_request.date_of_completion = datetime.now(timezone.utc)
+
         db.session.commit()
-        return {'message': 'Request status updated'}, 200
+        return {'message': f'Request status updated to {service_request.service_status}'}, 200
 
 
 # Customer actions (create/view service requests, post reviews)
@@ -361,7 +400,8 @@ class CustomerResource(Resource):
             service_id=args['service_id'],
             customer_id=current_user.id,
             remarks=args.get('remarks'),
-            customer_phone=args.get('customer_phone')
+            customer_phone=args.get('customer_phone'),
+            professional_id=args.get('professional_id'),
         )
         db.session.add(service_request)
         db.session.commit()
@@ -383,6 +423,7 @@ class CustomerResource(Resource):
 # Service listing for all available services
 class AvailableServicesResource(Resource):
     @marshal_with(service_fields)
+    @cache.cached(timeout=20) 
     def get(self, service_id=None):
         if service_id:
             @auth_required('token')
@@ -406,6 +447,6 @@ api.add_resource(AllProfessionalsResource, '/admin/all_professionals')
 api.add_resource(ProfessionalManagementResource, '/admin/professionals', '/admin/professionals/<int:professional_id>')
 api.add_resource(CustomerManagementResource, '/admin/customers', '/admin/customers/<int:user_id>')
 api.add_resource(UserResource, '/users/profile')
-api.add_resource(ProfessionalResource, '/professionals/<int:professional_id>', '/professionals/request/<int:request_id>')
+api.add_resource(ProfessionalResource, '/professionals/requests', '/professionals/request/<int:request_id>')
 api.add_resource(CustomerResource, '/customers/services','/customers/requests','/customers/requests/<int:request_id>')
 api.add_resource(AvailableServicesResource, '/services','/services/<int:service_id>')

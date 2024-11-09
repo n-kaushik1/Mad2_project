@@ -1,13 +1,71 @@
-from flask import current_app as app, request, jsonify, render_template
+from flask import current_app as app, request, jsonify, render_template , send_file
 from flask_security import auth_required, verify_password, hash_password
 from backend.models import *
+from datetime import datetime
+from backend.celery.tasks import add,create_csv,create_professional_csv
+from celery.result import AsyncResult
 
 datastore = app.security.datastore
+cache =app.cache
 
 # Define a home route
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.get('/celery')
+def celery():
+     task=add.delay(10,20)
+     return {'task_id': task.id}
+
+@app.get('/get-celery-data/<id>')
+def getData(id):
+    result = AsyncResult(id)
+
+    if result.ready():
+        return {'result': result.result},200
+    else:
+        return {'message':'Task not ready'},400
+    
+@app.get('/create-csv')
+@auth_required('token')
+def createCSV():
+    task = create_csv.delay()
+    return {'task_id' : task.id},200
+
+
+@app.get('/get-csv/<id>')
+@auth_required('token')
+def getCSV(id):
+    result = AsyncResult(id)
+
+    if result.ready():
+        return send_file(f'./backend/celery/user-downloads/{result.result}'),200
+    else:
+        return {'message':'Task not ready'},400  
+
+
+@app.get('/cache')
+@cache.cached(timeout = 3)
+def cache():
+    return {'Time': str(datetime.now())}
+
+# Endpoint for professionals to download their closed service requests
+@app.get('/create-professional-csv/<professional_id>')
+@auth_required('token')
+def createProfessionalCSV(professional_id):
+    task = create_professional_csv.delay(professional_id)
+    return {'task_id': task.id}, 200
+
+@app.get('/get-professional-csv/<id>')
+@auth_required('token')
+def getProfessionalCSV(id):
+    result = AsyncResult(id)
+    if result.ready():
+        return send_file(f'./backend/celery/user-downloads/{result.result}'), 200
+    else:
+        return {'message': 'Task not ready'}, 400
+
 
 @app.get('/protected')
 @auth_required('token')

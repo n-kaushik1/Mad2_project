@@ -27,7 +27,7 @@ export default {
     async fetchCustomers() {
       try {
         // Fetch customers data from the API
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
+        const token = this.$store.state.auth_token;
         const response = await fetch('/api/admin/customers', {
           headers: { 'Authentication-Token': token }
         });
@@ -46,7 +46,7 @@ export default {
     async toggleActive(customer) {
       try {
         // Toggle active status of a customer
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
+        const token = this.$store.state.auth_token;
         const response = await fetch(`/api/admin/customers/${customer.id}`, {
           method: 'PATCH',
           headers: {
@@ -79,7 +79,7 @@ export default {
     <div class="container my-5">
       <h2 class="mb-4">Customers</h2>
       <div class="table-wrapper">
-        <table class="table table-hover table-bordered">
+        <table v-if="filteredCustomers.length > 0" class="table table-hover table-bordered">
           <thead class="table-dark">
             <tr>
               <th>ID</th>
@@ -110,6 +110,7 @@ export default {
             </tr>
           </tbody>
         </table>
+        <p v-else class="text-muted text-center">No Customers available.</p>
       </div>
     </div>
 
