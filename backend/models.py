@@ -62,6 +62,7 @@ class ServiceRequest(db.Model):
     service_status = db.Column(db.String(50), default='requested')  # Status: 'requested', 'assigned', 'closed'
     remarks = db.Column(db.Text)
     customer_phone = db.Column(db.String(20), nullable=True)
+    customer_msg = db.Column(db.Text)
     
     #rating for the service (1-5 scale, assuming integer)
     rating = db.Column(db.Integer, nullable=True)  # Rating: null if not rated yet

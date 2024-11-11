@@ -16,8 +16,16 @@ export default {
       // Determine the search route based on the user's role
       const role = this.$store.state.role;
       if (role === 'Admin') return '/adminsearch';
-      if (role === 'Customer') return '/';
+      if (role === 'Customer') return '/customersearch';
       if (role === 'Service Professional') return '/professionalsearch';
+      return '/'; // Default route
+    },
+    summaryRoute() {
+      // Determine the search route based on the user's role
+      const role = this.$store.state.role;
+      if (role === 'Admin') return '/adminsummary';
+      if (role === 'Customer') return '/customersummary';
+      if (role === 'Service Professional') return '/professionalsummary';
       return '/'; // Default route
     },
     userRole() {
@@ -72,7 +80,7 @@ export default {
             <router-link exact class="nav-link" :to="searchhomeRoute"><span class="hover-effect">Search</span></router-link>
             </li>
             <li v-if="isLoggedIn" class="nav-item">
-            <router-link exact class="nav-link" to="/"><span class="hover-effect">Summary</span></router-link>
+            <router-link exact class="nav-link" :to="summaryRoute"><span class="hover-effect">Summary</span></router-link>
             </li>
           </ul>
           

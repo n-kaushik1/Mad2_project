@@ -37,13 +37,16 @@ service_request_fields = {
     'service_id': fields.Integer,
     'customer_id': fields.Integer,
     'professional_id': fields.Integer,
+    'rating': fields.Integer,
     'date_of_request': fields.DateTime,
     'date_of_completion': fields.DateTime,
     'service_status': fields.String,
     'remarks': fields.String,
+    'customer_msg': fields.String,
     'customer_phone': fields.String,
     'service_name': fields.String(attribute='parent_service.name'),
     'customer_name': fields.String(attribute='customer.name'),
+    'professional_name': fields.String(attribute='professional.name'),
     'address':fields.String(attribute='customer.address'),
     'pin_code':fields.String(attribute='customer.pin_code'),
 }
@@ -69,7 +72,9 @@ service_parser.add_argument('description', type=str, required=False)
 service_request_parser = reqparse.RequestParser()
 service_request_parser.add_argument('service_id', type=int, required=True)
 service_request_parser.add_argument('customer_id', type=int, required=False)
+service_request_parser.add_argument('rating', type=int, required=False)
 service_request_parser.add_argument('remarks', type=str, required=False)
+service_request_parser.add_argument('customer_msg', type=str, required=False)
 service_request_parser.add_argument('customer_phone', type=str, required=False)
 service_request_parser.add_argument('professional_id', type=int, required=False) 
 service_request_parser.add_argument('date_of_completion', type=str, required=False, help="Date of completion in DD-MM-YYYY format")
@@ -399,13 +404,14 @@ class CustomerResource(Resource):
         service_request = ServiceRequest(
             service_id=args['service_id'],
             customer_id=current_user.id,
-            remarks=args.get('remarks'),
+            customer_msg = args.get('customer_msg'),
             customer_phone=args.get('customer_phone'),
             professional_id=args.get('professional_id'),
         )
         db.session.add(service_request)
         db.session.commit()
         return service_request, 201
+    
 
     @auth_required('token')
     def put(self, request_id):
@@ -414,10 +420,56 @@ class CustomerResource(Resource):
         if not service_request or service_request.customer_id != current_user.id:
             return {'message': 'Service request not found or unauthorized'}, 404
 
+        # Parse request JSON for remarks and rating
+        data = request.get_json()
+        remarks = data.get('remarks')
+        rating = data.get('rating')
+
+        if not rating:
+            return {'message': 'Rating is required to close the request'}, 400
+
+        # Update service request details
         service_request.service_status = 'closed'
         service_request.date_of_completion = db.func.current_timestamp()
+        service_request.remarks = remarks
+        service_request.rating = rating
+
+        # Commit changes to the database
         db.session.commit()
         return {'message': 'Service request closed'}, 200
+    
+class CustomerReqManagement(Resource):
+    @marshal_with(service_request_fields)
+    @auth_required('token')
+    def get(self):
+        if 'Customer' not in [role.name for role in current_user.roles]:
+            return {'message': 'Access denied'}, 403
+        # Customer can view all of their own service requests
+        service_requests = ServiceRequest.query.filter(
+            ServiceRequest.customer_id == current_user.id
+        ).all()
+
+        if not service_requests:
+            return {'message': 'No service requests found'}, 404
+
+        return service_requests, 200    
+
+class ProfessionalsForServiceResource(Resource):
+    @marshal_with(user_fields)
+    @auth_required('token')
+    def get(self, service_id):
+        # Fetch professionals for a specific service
+        professionals = User.query.join(User.roles).filter(
+            Role.name == "Service Professional",
+            User.service_id == service_id,  # Use User.service_id to match the service
+            User.permission == 'approved',
+            User.active == True
+        ).all()
+
+        if not professionals:
+            return {'message': 'No professionals available for this service'}, 404
+
+        return professionals, 200   
 
 
 # Service listing for all available services
@@ -449,4 +501,6 @@ api.add_resource(CustomerManagementResource, '/admin/customers', '/admin/custome
 api.add_resource(UserResource, '/users/profile')
 api.add_resource(ProfessionalResource, '/professionals/requests', '/professionals/request/<int:request_id>')
 api.add_resource(CustomerResource, '/customers/services','/customers/requests','/customers/requests/<int:request_id>')
+api.add_resource(CustomerReqManagement, '/customers/servicerequest')
 api.add_resource(AvailableServicesResource, '/services','/services/<int:service_id>')
+api.add_resource(ProfessionalsForServiceResource, '/services/<int:service_id>/professionals')

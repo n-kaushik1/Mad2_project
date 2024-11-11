@@ -113,3 +113,19 @@ body {
     background-repeat: no-repeat;
 }
 
+/* customer */
+
+.customer{
+    display: flex;
+    justify-content: center; /* Center the dashboard horizontally */
+    align-items: center;
+    padding: 50px 20px;
+    min-height: 100vh; /* Full height for vertical centering */
+    box-sizing: border-box;
+    background-image: url('https://images.pexels.com/photos/1571459/pexels-photo-1571459.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; 
+    background-repeat: no-repeat;
+}
+

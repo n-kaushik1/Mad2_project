@@ -158,6 +158,7 @@ export default {
                             <tr><th>Customer Phone</th><td>{{ selectedRequest.customer_phone || 'N/A' }}</td></tr>
                             <tr><th>Address</th><td>{{ selectedRequest.address || 'Unavailable' }}</td></tr>
                             <tr><th>Pin Code</th><td>{{ selectedRequest.pin_code || 'N/A' }}</td></tr>
+                            <tr><th>Ratings</th><td>{{ selectedRequest.rating || 'N/A' }} ★</td></tr>
                             <tr><th>Date of completion</th><td>{{ formatDate(selectedRequest.date_of_completion) || 'N/A' }}</td></tr>
                         </table>
                     </div>

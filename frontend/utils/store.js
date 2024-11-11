@@ -57,6 +57,23 @@ const store = new Vuex.Store({
                 console.error(error.message);
             }
         },
+        
+        // New action for admin to fetch service requests
+        async fetchAdminServiceRequests({ commit, state }) {
+            try {
+                const response = await fetch(`/api/admin/requests`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        'Authentication-Token': state.auth_token
+                    }
+                });
+                if (!response.ok) throw new Error("Failed to load admin service requests.");
+                const requests = await response.json();
+                commit('setServiceRequests', requests);
+            } catch (error) {
+                console.error(error.message);
+            }
+        },
         async updateRequestStatus({ commit, state }, { requestId, action }) {
             try {
                 const response = await fetch(`/api/professionals/request/${requestId}?action=${action}`, {

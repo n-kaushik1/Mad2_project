@@ -67,6 +67,10 @@ import CustomerDashboard from "../pages/Customerdashboard.js";
 import ProfessionalDashboard from "../pages/Professionaldashboard.js";
 import AdminSearch from "../pages/AdminSearch.js";
 import ProfessionalSearch from '../pages/ProfessionalSearch.js';
+import CustomerSearch from '../pages/CustomerSearch.js';
+import CustomerSummary from '../pages/CustomerSummary.js';
+import ProfessionalSummary from '../pages/ProfessionalSummary.js';
+import AdminSummary from '../pages/AdminSummary.js';
 
 const routes = [
     { path: '/', component: Home },
@@ -77,6 +81,10 @@ const routes = [
     { path: '/professional', component: ProfessionalDashboard, meta: { requiresLogin: true, role: 'Service Professional' } },
     { path: '/adminsearch', component: AdminSearch, meta: { requiresLogin: true, role: 'Admin' } },
     { path: '/professionalsearch', component: ProfessionalSearch, meta: { requiresLogin: true, role: 'Service Professional' } },
+    { path: '/professionalsummary', component: ProfessionalSummary, meta: { requiresLogin: true, role: 'Service Professional' } },
+    { path: '/customersearch', component: CustomerSearch, meta: { requiresLogin: true, role: 'Customer'  } },
+    { path: '/customersummary', component: CustomerSummary, meta: { requiresLogin: true, role: 'Customer'  } },
+    { path: '/adminsummary', component: AdminSummary, meta: { requiresLogin: true, role: 'Admin' } },
 ];
 
 const router = new VueRouter({

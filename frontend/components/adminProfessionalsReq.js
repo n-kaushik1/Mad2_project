@@ -4,7 +4,7 @@ export default {
     template: `
     <div class="table-wrapper">
     <div class="container my-5">
-        <table v-if="pendingProfessionals.length" class="table table-striped table-hover">
+        <table  class="table table-striped table-hover">
             <thead class="thead-light">
                 <tr>
                     <th scope="col">ID</th>
@@ -39,7 +39,7 @@ export default {
                 </tr>
             </tbody>
         </table>
-        <p v-else class="text-muted">No new professionals request.</p>
+        
         </div>
 
         <!-- Professional Details Modal -->

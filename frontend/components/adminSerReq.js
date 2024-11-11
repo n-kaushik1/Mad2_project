@@ -70,7 +70,12 @@ export default {
                             </tr>
                             <tr>
                                 <th>Remarks</th>
-                                <td>{{ selectedRequest.remarks }}</td>
+                                <td>{{ selectedRequest.remarks || 'NA' }}</td>
+                            </tr>
+                            <tr><th>Ratings</th><td>{{ selectedRequest.rating || 'N/A' }} ★</td></tr>
+                            <tr>
+                                <th>Customer Message</th>
+                                <td>{{ selectedRequest.customer_msg || 'NA' }}</td>
                             </tr>
                             <tr>
                                 <th>Customer Phone</th>

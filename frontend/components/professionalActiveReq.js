@@ -77,7 +77,7 @@ export default {
                             <tr><th>Service Name</th><td>{{ selectedRequest.service_name || 'Unknown' }}</td></tr>
                             <tr><th>Customer Name</th><td>{{ selectedRequest.customer_name || 'Unknown' }}</td></tr>
                             <tr><th>Date of Request</th><td>{{ formatDate(selectedRequest.date_of_request) }}</td></tr>
-                            <tr><th>Remarks</th><td>{{ selectedRequest.remarks || 'None' }}</td></tr>
+                            <tr><th>Customer Message</th><td>{{ selectedRequest.customer_msg || 'None' }}</td></tr>
                             <tr><th>Customer Phone</th><td>{{ selectedRequest.customer_phone || 'N/A' }}</td></tr>
                             <tr><th>Address</th><td>{{ selectedRequest.address || 'Unavailable' }}</td></tr>
                             <tr><th>Pin Code</th><td>{{ selectedRequest.pin_code || 'N/A' }}</td></tr>

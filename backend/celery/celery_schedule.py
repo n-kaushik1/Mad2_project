@@ -9,7 +9,7 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
     sender.add_periodic_task(
-                crontab(hour=13, minute=31),  # Adjust time as needed
+                crontab(hour=16, minute=2),  # Adjust time as needed
                 send_daily_reminders.s()
     )
 

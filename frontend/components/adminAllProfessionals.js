@@ -53,7 +53,7 @@ export default {
     },
     async toggleActive(professional) {
       try {
-        const token = JSON.parse(localStorage.getItem('user'))?.token;
+        const token = this.$store.state.auth_token;
         const response = await fetch(`/api/admin/professionals/${professional.id}`, {
           method: 'PATCH',
           headers: {
