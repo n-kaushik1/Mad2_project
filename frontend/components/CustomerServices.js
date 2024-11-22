@@ -65,6 +65,26 @@ export default {
             </div>
         </div>
 
+        <!-- No Professionals Available Modal -->
+<div v-if="showUnavailableModal" class="modal fade show d-block" style="z-index: 1055;">
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Service Unavailable</h5>
+            <button type="button" class="btn-close" @click="closeUnavailableModal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>Currently, we cannot book this service as no professionals are available. Please check back later.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeUnavailableModal">Close</button>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
         <!-- Profile Modal -->
         <div v-if="selectedProfessionalProfile" class="modal fade show" tabindex="-1" style="display: block;">
             <div class="modal-dialog modal-lg">
@@ -119,24 +139,25 @@ export default {
         </div>
 
         <!-- Modal backdrop -->
-        <div v-if="selectedService || selectedProfessional || selectedProfessionalProfile || selectedServiceInfo" class="modal-backdrop fade show"></div>
+        <div v-if="selectedService || selectedProfessional || selectedProfessionalProfile || selectedServiceInfo || showUnavailableModal" class="modal-backdrop fade show"></div>
     </div>
     `,
     data() {
         return {
-            services: [],              
-            selectedService: null,     
+            services: [],
+            selectedService: null,
             selectedProfessional: null,
-            professionals: [],         
+            professionals: [],
             serviceColors: ['#FFCDD2', '#C8E6C9', '#BBDEFB', '#FFF9C4', '#D1C4E9', '#FFCCBC'],
             professionalColors: ['#AED581', '#FF8A65', '#4FC3F7', '#FFF176', '#BA68C8', '#E57373'],
-            bookingDetails: {          
+            bookingDetails: {
                 remarks: '',
                 customer_phone: '',
                 professional_id: ''
             },
             selectedProfessionalProfile: null,
-            selectedServiceInfo: null // Stores the service details for the "View Info" modal
+            selectedServiceInfo: null,
+            showUnavailableModal: false // Added for handling no professionals available modal
         };
     },
     created() {
@@ -172,18 +193,34 @@ export default {
                         'Authentication-Token': this.$store.state.auth_token
                     }
                 });
-                if (!response.ok) throw new Error("Failed to fetch professionals.");
-                
-                this.professionals = await response.json();
+        
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch professionals: ${response.statusText}`);
+                }
+        
+                const professionals = await response.json();
+                if (professionals.length === 0) {
+                    // No professionals available
+                    this.professionals = [];
+                    this.showUnavailableModal = true; // Trigger "No Professionals Available" modal
+                } else {
+                    this.professionals = professionals; // Populate professionals
+                }
             } catch (error) {
                 console.error("Failed to fetch professionals:", error);
                 this.professionals = [];
+                this.showUnavailableModal = true; // Show the modal if fetch fails
             }
         },
         closeModal() {
             this.selectedService = null;
             this.selectedProfessional = null;
             this.professionals = [];
+        },
+        closeUnavailableModal() {
+            this.showUnavailableModal = false;
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach((backdrop) => backdrop.remove());
         },
         closeProfileModal() {
             this.selectedProfessionalProfile = null;

@@ -25,11 +25,12 @@ export default {
                          <button class="btn btn-primary" @click="viewRequestDetails(request)">
                             View
                          </button>
-                         <button v-if="request.service_status !== 'closed'" 
+                         <button v-if="request.service_status == 'accepted'" 
                                  @click="openCloseRequestModal(request)" 
                                  class="btn btn-secondary ms-2">
                             Close Request
                          </button>
+      
                          <button v-if="request.service_status === 'closed' && (!request.remarks || !request.rating)"
                                  @click="openRatingModal(request)"
                                  class="btn btn-warning ms-2">
@@ -38,9 +39,11 @@ export default {
                       </td>
                    </tr>
                 </tbody>
+                <br>
              </table>
              <p v-else class="text-muted">No service requests found.</p>
           </div>
+          
  
           <!-- Modal for displaying request details -->
           <div v-if="selectedRequest" class="modal fade show" tabindex="-1" style="display: block;">
@@ -54,6 +57,7 @@ export default {
                       <table class="details-table">
                          <tr><th>ID</th><td>{{ selectedRequest.id }}</td></tr>
                          <tr><th>Service Name</th><td>{{ selectedRequest.service_name || 'Unknown' }}</td></tr>
+                         <tr><th>Customer message</th><td>{{ selectedRequest.customer_msg || 'Unknown' }}</td></tr>
                          <tr><th>Date of Request</th><td>{{ formatDate(selectedRequest.date_of_request) }}</td></tr>
                          <tr><th>Remarks</th><td>{{ selectedRequest.remarks || 'None' }}</td></tr>
                          <tr><th>Address of service</th><td>{{ selectedRequest.address || 'Unavailable' }}</td></tr>

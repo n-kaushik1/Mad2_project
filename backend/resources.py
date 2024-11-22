@@ -21,7 +21,8 @@ user_fields = {
     'address': fields.String,
     'pin_code': fields.String,
     'date_created': fields.DateTime,
-    'permission': fields.String
+    'permission': fields.String,
+    'document_url': fields.String
 }
  
 service_fields = {
@@ -162,7 +163,7 @@ class AdminResource(Resource):
 class ServiceRequestManagementResource(Resource):
     @marshal_with(service_request_fields)
     @auth_required('token')
-    @cache.cached(timeout=10)
+    # @cache.cached(timeout=10)
     def get(self, request_id=None):
         # Only allow Admin users to view service requests
         if 'Admin' not in [role.name for role in current_user.roles]:
@@ -194,9 +195,20 @@ class ProfessionalManagementResource(Resource):
             ).first()
             if not professional:
                 return {'message': 'Service Professional not found'}, 404
+
+            # Add document_url to the professional object (example with a database field)
+            professional.document_url = professional.document_path or None  # Ensure document_path is available in the database
             return professional
         else:
-            professionals = User.query.join(User.roles).filter(Role.name == "Service Professional",User.permission == 'pending').all()
+            professionals = User.query.join(User.roles).filter(
+                Role.name == "Service Professional",
+                User.permission == 'pending'
+            ).all()
+
+            # Add document_url to each professional
+            for professional in professionals:
+                professional.document_url = professional.document_path or None  # Ensure document_path is available in the database
+
             return professionals, 200
 
     @auth_required('token')

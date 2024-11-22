@@ -32,7 +32,12 @@ export default {
         </div>
         <br>
            <!-- Button to download closed service requests report -->
-           <button class="btn btn-success mb-3" @click="downloadClosedServiceRequestsReport">Download Closed Requests Report</button>             
+           <button 
+            v-if="hasClosedRequests" 
+            class="btn btn-success mb-3" 
+            @click="downloadClosedServiceRequestsReport">
+            Download Closed Requests Report
+        </button>          
 
         <!-- Modal for displaying request details -->
         <div v-if="selectedRequest" class="modal fade show" tabindex="-1" style="display: block;">
@@ -103,6 +108,11 @@ export default {
             serviceRequests: [],
             selectedRequest: null // Holds the request data for the modal
         };
+    },
+    computed: {
+        hasClosedRequests() {
+            return this.serviceRequests.some(request => request.service_status === 'closed');
+        }
     },
     created() {
         injectStyles(); // Inject CSS styles when component is created

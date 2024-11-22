@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 
 SMTP_SERVER = "localhost"
 SMTP_PORT = 1025
-SENDER_EMAIL = 'admin@mail.com'
+SENDER_EMAIL = 'homelyservices@mail.com'
 SENDER_PASSWORD = ''
 
 def send_email(to,subject,content):

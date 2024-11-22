@@ -1,9 +1,11 @@
-from flask import current_app as app, request, jsonify, render_template , send_file
+from flask import current_app as app, request, jsonify, render_template , send_file,send_from_directory
 from flask_security import auth_required, verify_password, hash_password
 from backend.models import *
 from datetime import datetime
 from backend.celery.tasks import add,create_csv,create_professional_csv
 from celery.result import AsyncResult
+import os
+import base64
 
 datastore = app.security.datastore
 cache =app.cache
@@ -121,6 +123,7 @@ def register():
     service_id = data.get('serviceType')
     description = data.get('description')
     experience = data.get('experience')
+    document_base64 = data.get('document')
 
     # Validate input fields
     if not email or not password or role_name not in ['Service Professional', 'Customer'] or not name:
@@ -139,6 +142,28 @@ def register():
         if not service:
             return jsonify({"message": "Invalid service ID"}), 400
 
+        # Handle the document if provided
+        if document_base64:
+            try:
+                # Ensure the uploads directory exists
+                os.makedirs("uploads", exist_ok=True)
+                
+                # Decode Base64 and save the document
+                if "," in document_base64:  # Check if prefix exists
+                    document_data = base64.b64decode(document_base64.split(",")[1])
+                else:
+                    document_data = base64.b64decode(document_base64)
+
+                document_filename = f"{email}_document.pdf"  # Save with unique filename
+                document_path = os.path.join("backend/uploads", document_filename)
+
+                with open(document_path, "wb") as file:
+                    file.write(document_data)
+            except Exception as e:
+                return jsonify({"message": f"Error processing document: {str(e)}"}), 400
+        else:
+            return jsonify({"message": "Document is required for service professionals"}), 400    
+
     # Create a new user
     new_user = datastore.create_user(
         email=email,
@@ -150,7 +175,8 @@ def register():
         description=description if role_name == 'Service Professional' else None,
         experience=experience if role_name == 'Service Professional' else None,
         permission='pending' if role_name == 'Service Professional' else None,
-        active= False if role_name == 'Service Professional' else True
+        active=False if role_name == 'Service Professional' else True,
+        document_path=document_path if role_name == 'Service Professional' else None  # Add document path here
     )
 
     # Assign the role to the new user
@@ -168,3 +194,15 @@ def register():
         'role': [role.name for role in new_user.roles],
         'id': new_user.id
     }), 201
+
+# Path to your uploads folder
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'backend/uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+@app.route('/backend/uploads/<filename>')
+def serve_file(filename):
+    """Serve the requested file from the uploads directory."""
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    except FileNotFoundError:
+        return {'message': 'File not found'}, 404

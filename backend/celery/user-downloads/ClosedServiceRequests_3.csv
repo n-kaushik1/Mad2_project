@@ -1,2 +1,0 @@
-id,service_id,customer_id,professional_id,date_of_request,date_of_completion,service_status,remarks,customer_phone,customer_msg,rating
-1,2,2,3,2024-11-09T21:01:05,2024-11-09T21:01:52.755164,closed,,45769416,,

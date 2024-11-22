@@ -64,6 +64,15 @@ export default {
                 <label for="experience">Experience (in years)</label>
                 <input type="number" class="form-control" id="experience" placeholder="Enter your experience" v-model="experience" />
               </div>
+              <div class="form-group mb-3">
+      <label for="document">Upload Document (e.g., Resume ,Certification (in pdf))</label>
+      <input
+        type="file"
+        class="form-control"
+        id="document"
+        @change="handleFileUpload"
+      />
+    </div>
             </div>
 
             <button class="btn btn-primary" @click="submitRegister" :disabled="!isFormComplete">Register</button>
@@ -85,6 +94,7 @@ export default {
       description: '',
       experience: '',
       services: [], // List of available services
+      document: null,
     };
   },
   computed: {
@@ -114,6 +124,17 @@ export default {
     }
   },
   methods: {
+    handleFileUpload(event) {
+      this.document = event.target.files[0]; // Store the selected file
+    },
+    async convertToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file); // Convert file to Base64
+      });
+    },
     async submitRegister() {
       const registrationData = {
         name: this.name,
@@ -128,6 +149,15 @@ export default {
         registrationData.serviceType = this.serviceType;
         registrationData.description = this.description;
         registrationData.experience = this.experience;
+        if (this.document) {
+          try {
+            registrationData.document = await this.convertToBase64(this.document);
+          } catch (error) {
+            alert('Error converting document to Base64.');
+            console.error(error);
+            return;
+          }
+        }
       }
 
       try {
@@ -162,6 +192,7 @@ export default {
       this.serviceType = '';
       this.description = '';
       this.experience = '';
+      this.document = null;
     },
   },
 };

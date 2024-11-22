@@ -38,6 +38,7 @@ class User(db.Model, UserMixin):
     experience = db.Column(db.Integer)  # Experience in years for professionals
     address = db.Column(db.String(255))  # Address field
     pin_code = db.Column(db.String(10))  # Pin Code field
+    document_path = db.Column(db.String(255), nullable=True) 
     service = db.relationship('Service', backref=db.backref('professionals', lazy=True))
 
 # Service model
@@ -63,6 +64,7 @@ class ServiceRequest(db.Model):
     remarks = db.Column(db.Text)
     customer_phone = db.Column(db.String(20), nullable=True)
     customer_msg = db.Column(db.Text)
+    
     
     #rating for the service (1-5 scale, assuming integer)
     rating = db.Column(db.Integer, nullable=True)  # Rating: null if not rated yet
